@@ -59,7 +59,8 @@ dependencies {
     // implementation(libs.maps.compose)
     // implementation(libs.maps.compose)
     // compose maps library
-    implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.maps.android:maps-compose:6.1.0")
+
     // implementation (com.google.maps.android:maps-compose:6.2.1)
 
     // Optionally, you can include the Compose utils library for Clustering,
@@ -68,4 +69,7 @@ dependencies {
 
     // Optionally, you can include the widgets library for ScaleBar, etc.
     implementation ("com.google.maps.android:maps-compose-widgets:6.2.1")
+    // Google Play Services for Location and Maps
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }
