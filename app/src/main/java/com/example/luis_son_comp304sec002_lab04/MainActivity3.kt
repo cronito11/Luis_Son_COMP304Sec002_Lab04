@@ -197,12 +197,12 @@ fun MyGoogleMap(selectedItem: String) {
             isNear = results[0] < geofenceRadius
         }
     }
-    LaunchedEffect(userLocation) {
+    /*LaunchedEffect(userLocation) {
         userLocation?.let {
             cameraPositionState.position =
                 CameraPosition.fromLatLngZoom(it, 15f)
         }
-    }
+    }*/
 
     var currentMapType by remember {
         mutableStateOf(MapType.NORMAL) // Initial map type
