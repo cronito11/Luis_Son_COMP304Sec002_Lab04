@@ -52,6 +52,8 @@ import androidx.compose.material3.Button
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.MapStyleOptions
 
 class MainActivity3 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -208,11 +210,27 @@ fun MyGoogleMap(selectedItem: String) {
         mutableStateOf(MapType.NORMAL) // Initial map type
     }
     //D. Map Properties: isMyLocationEnabled shows the blue dot
-    val mapProperties by remember(currentMapType) { // Recompose when currentMapType changes
-        mutableStateOf(MapProperties(
-            isMyLocationEnabled = true, // Shows the blue dot
-            mapType = currentMapType,
-            ))
+
+    val mapStyleJson = """
+    [
+      {
+        "featureType": "poi",
+        "stylers": [{ "visibility": "off" }]
+      },
+      {
+        "featureType": "transit",
+        "stylers": [{ "visibility": "off" }]
+      }
+    ]
+""".trimIndent()
+    val mapProperties by remember(currentMapType) {
+        mutableStateOf(
+            MapProperties(
+                isMyLocationEnabled = true,
+                mapType = currentMapType,
+                mapStyleOptions = MapStyleOptions(mapStyleJson)
+            )
+        )
     }
 
     // E. Map UI Settings: myLocationButtonEnabled adds the "target" icon to the top right
@@ -248,6 +266,8 @@ fun MyGoogleMap(selectedItem: String) {
                     modifier = Modifier.padding(8.dp)
                 )
             }
+            var tappedLocation by remember { mutableStateOf<LatLng?>(null) }
+
             GoogleMap(
                 modifier = Modifier
                     .weight(1f)
@@ -255,10 +275,16 @@ fun MyGoogleMap(selectedItem: String) {
                     .padding(paddingValues),
                 cameraPositionState = cameraPositionState,
                 properties = mapProperties,
-                uiSettings = uiSettings
+                uiSettings = uiSettings,
+
+                onMapClick = { latLng ->
+                    tappedLocation = latLng
+                },
+                onMapLongClick = { latLng ->
+                    tappedLocation = latLng
+                }
             ) {
 
-                // Optional: Add a marker at the default position or elsewhere
                 userLocation?.let {
                     Marker(
                         state = MarkerState(position = it),
@@ -270,28 +296,49 @@ fun MyGoogleMap(selectedItem: String) {
                 Marker(
                     state = MarkerState(position = location),
                     title = selectedItem,
-                    snippet = "Location of $selectedItem"
+                    snippet = "Location of $selectedItem",
+                    icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                    onClick = {
+                        isNear = true // simulate interaction feedback
+                        false
+                    }
                 )
 
                 Circle(
                     center = location,
-                    radius = geofenceRadius.toDouble(), // meters
+                    radius = geofenceRadius.toDouble(),
                     strokeColor = Color.Red,
                     fillColor = Color.Red.copy(alpha = 0.2f)
                 )
-            }
-            MapTypeControls(
-                currentMapType = currentMapType,
-                onMapTypeSelected = { newMapType ->
-                    currentMapType = newMapType
+
+                userLocation?.let {
+                    Polyline(
+                        points = listOf(it, location),
+                        color = Color.Blue,
+                        width = 8f
+                    )
                 }
-            )
+
+                tappedLocation?.let {
+                    Marker(
+                        state = MarkerState(position = it),
+                        title = "Pinned Location",
+                        snippet = "You tapped here"
+                    )
+                }
+            }
 
         }
     }
 }
 
-
+fun getDirectionsUrl(origin: LatLng, dest: LatLng, apiKey: String): String {
+    return "https://maps.googleapis.com/maps/api/directions/json?" +
+            "origin=${origin.latitude},${origin.longitude}" +
+            "&destination=${dest.latitude},${dest.longitude}" +
+            "&mode=driving" +
+            "&key=$apiKey"
+}
 @Composable
 fun MapTypeControls(
     currentMapType: MapType,
