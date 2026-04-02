@@ -1,30 +1,34 @@
 package com.example.luis_son_comp304sec002_lab04
+
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.TopAppBar
-
-import androidx.compose.runtime.Composable
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.luis_son_comp304sec002_lab04.ui.theme.MapAttractionsTheme
@@ -32,7 +36,6 @@ import com.example.luis_son_comp304sec002_lab04.ui.theme.MapAttractionsTheme
 class MainActivity2 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             MapAttractionsTheme {
                 Surface(
@@ -54,48 +57,104 @@ fun ItemListScreen(category: String) {
 
     val items = when (category) {
         "Clubs" -> listOf("Rebel", "Lost & Found", "Whiskey A Go-Go", "Club Lux")
-        "Beaches" -> listOf("Woodbine Beach", "Cherry Beach", "Kew-Balmy Beach", "Bluffer’s Park Beach")
+        "Beaches" -> listOf("Woodbine Beach", "Cherry Beach", "Kew-Balmy Beach", "Bluffer's Park Beach")
         "Parks" -> listOf("High Park", "Tommy Thompson Park", "Trinity Bellwoods Park", "Rouge National Urban Park")
         "Fun Activities" -> listOf("Woodbine Casino", "Canada's Wonderland", "K1 Speed Toronto", "Drinks")
         else -> listOf()
     }
 
-    Column(
+    val categoryIcon = when (category) {
+        "Clubs" -> "Nightlife"
+        "Beaches" -> "Waterfront"
+        "Parks" -> "Nature"
+        "Fun Activities" -> "Adventure"
+        else -> "Explore"
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFF0D0D0D), Color(0xFF1A1A2E))
+                )
+            )
     ) {
-        TopAppBar(
-            title = {
-                Text("Explore $category", fontSize = 20.sp)
-            },
-            navigationIcon = {
-                IconButton(onClick = {
-                    (context as? Activity)?.onBackPressed()
-                }) {
-                    Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_agenda),
-                        contentDescription = "Back",
-                        tint = Color.Black
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(bottom = 32.dp)
         ) {
-            items(items.size) { index ->
-                CategoryCard(
-                    item = items[index],
-                    onCardClick = { selectedItem ->
-                        navigateToMap(selectedItem, context)
-                    },
-                    category = category
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.1f))
+                            .clickable { (context as? Activity)?.onBackPressed() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = "EXPLORE",
+                            fontSize = 11.sp,
+                            letterSpacing = 4.sp,
+                            color = Color(0xFFE8B84B),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = category,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "${items.size} LOCATIONS NEARBY",
+                    fontSize = 11.sp,
+                    letterSpacing = 3.sp,
+                    color = Color.White.copy(alpha = 0.4f),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            items(items.size) { index ->
+                val item = items[index]
+                var visible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { visible = true }
+
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(tween(400, delayMillis = index * 80)) +
+                            slideInVertically(tween(400, delayMillis = index * 80)) { it / 4 }
+                ) {
+                    AttractionCard(
+                        item = item,
+                        index = index + 1,
+                        onCardClick = { selectedItem -> navigateToMap(selectedItem, context) },
+                        category = category
+                    )
+                }
             }
         }
     }
@@ -103,12 +162,13 @@ fun ItemListScreen(category: String) {
 
 private fun navigateToMap(item: String, context: Context) {
     val intent = Intent(context, MainActivity3::class.java).apply {
-        putExtra("selectedItem", item) // Pass the selected item to the map activity
+        putExtra("selectedItem", item)
     }
     context.startActivity(intent)
 }
+
 @Composable
-fun CategoryCard(item: String, onCardClick: (String) -> Unit, category: String) {
+fun AttractionCard(item: String, index: Int, onCardClick: (String) -> Unit, category: String) {
     val backgroundImage = when (category) {
         "Clubs" -> when (item) {
             "Rebel" -> painterResource(id = R.drawable.rebel)
@@ -121,7 +181,7 @@ fun CategoryCard(item: String, onCardClick: (String) -> Unit, category: String) 
             "Woodbine Beach" -> painterResource(id = R.drawable.woodbine)
             "Cherry Beach" -> painterResource(id = R.drawable.cherry)
             "Kew-Balmy Beach" -> painterResource(id = R.drawable.kew)
-            "Bluffer’s Park Beach" -> painterResource(id = R.drawable.bluffers)
+            "Bluffer's Park Beach" -> painterResource(id = R.drawable.bluffers)
             else -> painterResource(id = R.drawable.beach)
         }
         "Parks" -> when (item) {
@@ -141,40 +201,87 @@ fun CategoryCard(item: String, onCardClick: (String) -> Unit, category: String) 
         else -> painterResource(id = R.drawable.noimg)
     }
 
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .shadow(12.dp, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(20.dp))
             .clickable { onCardClick(item) }
-            .padding(8.dp)
-            .shadow(8.dp),
-        shape = MaterialTheme.shapes.medium,
+    ) {
+        Image(
+            painter = backgroundImage,
+            contentDescription = item,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(175.dp),
+            contentScale = ContentScale.Crop
+        )
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(175.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.78f)
+                        )
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .padding(14.dp)
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE8B84B))
+                .align(Alignment.TopStart),
+            contentAlignment = Alignment.Center
         ) {
-        Box {
-            Image(
-                painter = backgroundImage,
-                contentDescription = item,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.7f)
-            )
-
             Text(
-                text = item,
-                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 35.sp, color = Color.White, fontWeight = FontWeight.Bold),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(16.dp)
+                text = index.toString().padStart(2, '0'),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.Black
             )
         }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    MapAttractionsTheme {
-        ItemListScreen(category = "Attractions")
+        Box(
+            modifier = Modifier
+                .padding(14.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.White.copy(alpha = 0.15f))
+                .padding(horizontal = 10.dp, vertical = 5.dp)
+                .align(Alignment.TopEnd)
+        ) {
+            Text(
+                text = "View on map →",
+                fontSize = 11.sp,
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = item,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+            Text(
+                text = "Tap to get directions",
+                fontSize = 12.sp,
+                color = Color(0xFFE8B84B).copy(alpha = 0.85f),
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
